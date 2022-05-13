@@ -1,5 +1,5 @@
 ---
-title: "Mouse_EDA"
+title: "Final Report"
 author: "Group 9"
 date: "2022/4/6"
 output: pdf_document
@@ -60,8 +60,8 @@ Our group focuses on the Zero Maze experiment and conducts the following analysi
 
 Our client carried out the Zero Maze experiment on 13 mice; the data of each mouse are stored in separate data sets. Each experiment’s time length is 10 minutes, and the behaviors of the mouse and information of each cell are recorded every 10 HZ and stored as a row. The following graph shows the basic structure of the data sets.
 
-```{r}
-load.image("1.png")
+```{r echo=FALSE, out.width = '90%'}
+knitr::include_graphics("2.png")
 ```
 
 Our client records whether the mouse is in the open armor in the close arm separately using two columns, a value of 1 in a column representing the mouse is in the corresponding arm, 0 representing not. When the mouse transits from one arm to the other and its body is in the middle of the two arms, the values of the two columns are both recorded as 0. However, after discussing with our client, we consider the transition situation the edge case and no longer include them in the analysis. Thus the behaviors of mice in this experiment are assumed binary; they either stay in the open arm or the closed arm.
@@ -368,12 +368,14 @@ ggplot(data=rf_result_2, map=aes(x = mouse, y = value, width=0.85,fill=factor(va
 
 We also have built a simple neural network model to predict the mice's behaviors. In the model, we construct two hidden layers, which contain 100 units and 50 units respectively, and both with ReLu activation function. In the output layer, we use the Sigmoid activation function to show the probability of whether the mouse is conducting behavior 1. The following graph shows the model structure of mouse Z409 as an example.
 
-```{r}
-load.image("2.png")
+
+```{r echo=FALSE, out.width = '90%'}
+knitr::include_graphics("1.png")
 ```
 
-```{r}
-load.image("3.png")
+
+```{r echo=FALSE, out.width = '90%'}
+knitr::include_graphics("3.png")
 ```
 The accuracies of our Neural Network models are very high; most of them are around 97%. We set the epochs to be 50, batch size to be 32, and validation set to be random 20% of the data, and we plot the model accuracy of mouse Z409 as an example below.
 
