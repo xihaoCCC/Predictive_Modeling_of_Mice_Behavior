@@ -275,6 +275,7 @@ Influential values which are extreme individual data points that can alter the q
 ```{r}
 plot(m1, which = 4, id.n = 3)
 ```
+
 ## Tree-Based Method
 
 We extract 20 PC to fit the logistic regression, while the price for that is that we lose some useful signal information and noise since the top 20 PC only explained an accumulative 61% of the data, and we only get the 83% accuracy. 
@@ -309,6 +310,7 @@ confusionMatrix(table(p,rf[-train,]$behavior))
 ```
 
 ### Random Forest
+
 A random forest is the average of many different single trees that only contain different subsets of original predictors. So a random forest will typically be helpful when we have many correlated predictors. We use a random forest model, which can be a universal method for all 13 zero maze data sets. We choose predictor subset size for each data set according to the number of cells. Then we build a reproducible function ‘rf’ and apply it to all 13 data sets.
 
 
