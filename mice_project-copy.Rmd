@@ -1,0 +1,432 @@
+---
+title: "Mouse_EDA"
+author: "XihaoCao"
+date: "2022/4/6"
+output: pdf_document
+---
+
+```{r setup,set.seed(1)}
+knitr::opts_chunk$set(cache = T)
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(warning = F, message = F)
+```
+
+
+
+```{r}
+library(tidyverse)
+# the following three are for reading Matlab files
+library(R.utils)
+library(R.oo)
+library(R.matlab)
+# for the graph
+library(reshape2)
+library(gridGraphics)
+library(grid)
+library(gplots)
+library(gridExtra)
+
+# if (!require("BiocManager", quietly = TRUE)) {
+#     install.packages("BiocManager")
+# }
+# BiocManager::install("ComplexHeatmap")
+
+library(ComplexHeatmap)
+library(circlize)
+library(boot)
+library(corrplot)
+library(lme4)
+library(MASS)
+library(class)
+library(caret)
+library(naivebayes)
+library("FactoMineR")
+library("factoextra")
+library(verification)
+library(precrec)
+library(flextable)
+library(imager)
+```
+
+# Introduction
+
+Our client is Cruz-Martin, Alberto from the Center for Systems Neuroscience at Boston University. Our client is mainly interested in decoding how mice's brain circuits control their behaviors, and he wants to understand the contribution of specific cell types and their connections to the visual processing and perception of a mouse. Our client wants us to help him predict the mice's behaviors by their cell activation status in this project. 
+
+Our client has conducted three types of experiments: Zero Maze, Opposite Sex, and Direct Interaction on multiple mice. In the Zero Maze experiment, mice are placed in an elevated zero maze to explore for 10 minutes, they can either be in the closed arm (anxiolytic) or the open arm (anxiogenic), and the location of the mice is recorded. In the Opposite Sex experiment, mice were placed in a social chamber for 10 minutes and allowed the mice to explore two cups containing a male and female of the same strain. Which cup the experiment mouse interacts with is recorded. In the Direct Interaction experiment, each mouse is placed in a social chamber for 5 minutes and is allowed to interact with a novel mouse of the same strain freely. Then whether the experiment mouse is performing a social behavior is recorded. In all three experiments, the behaviors of mice are considered binary.
+
+Our group focuses on the Zero Maze experiment and conducts the following analysis.
+
+# Data and Methods
+
+Our client carried out the Zero Maze experiment on 13 mice; the data of each mouse are stored in separate data sets. Each experiment’s time length is 10 minutes, and the behaviors of the mouse and information of each cell are recorded every 10 HZ and stored as a row. The following graph shows the basic structure of the data sets.
+
+```{r}
+load.image("1.png")
+```
+
+Our client records whether the mouse is in the open armor in the close arm separately using two columns, a value of 1 in a column representing the mouse is in the corresponding arm, 0 representing not. When the mouse transits from one arm to the other and its body is in the middle of the two arms, the values of the two columns are both recorded as 0. However, after discussing with our client, we consider the transition situation the edge case and no longer include them in the analysis. Thus the behaviors of mice in this experiment are assumed binary; they either stay in the open arm or the closed arm.
+
+Each mouse cell's calcium flow amount is recorded to quantify whether the cell is on fire; the values are all positive. Meanwhile, the collection of cells recorded for each mouse is different; for example, 112 cells of mouse Z409 are recorded, and only 28 cells of mouse Z416 are recorded. 
+
+## EDA
+
+```{r}
+# data_list is is the raw data without combining the two behaviors
+# data_list2 combines the two behaviors and delete missing values
+source("Data_Wrangling_2.R")
+
+# combine behavior two columns to one with binary value 0 or 1, where 1 represent behavior 1 and 0 behavior 2 and ehavior (0, 0) is considered missing value, thus deleted
+data_list2 <- list()
+for (i in 1:length(data_list)) {
+  dataset <- data_list[[1]] %>% filter(B1 != 0 | B2 != 0)
+  data_list2[[i]] <- dataset[, -2]
+}
+
+attributes(data_list2)$names <- c("Z_409", "Z_412", "Z_414", "Z_416", "Z_417",
+                                 "Z_418", "Z_251", "Z_256", "Z_257","Z_258",
+                                 "Z_274", "Z_254", "Z_255")
+```
+
+Then we explore the proportion of two types of behaviors of each mouse. We can see that most mice conduct behavior 1 at least 50% of the time except for mice Z251 and Z255. Mouse Z257, Z417, and Z418 even conduct behavior 1 about 75%. We also notice the existence of missing values where both behaviors are recorded as 0, but there are not many of them.
+
+```{r}
+# the input of this function should be the data_list
+distribution_of_behavior <- function(dl){
+  result <- NULL
+  for (i in 1:length(dl)) {
+    data <- dl[[i]]
+    behavior <- str_c(as.character(data[,1]), as.character(data[,2]), sep = ", ")
+    result <- bind_rows(result, data.frame(value = behavior, class = paste("mouse", name[i])))
+  }
+  graph <- ggplot(result) + geom_bar(aes(x = class, fill = value), position = "fill") +
+    theme(axis.text.x = element_text(angle = 35)) +
+    labs(x = NULL, y = "proportion", title = "behaviors proportion of each mouse") +
+    scale_fill_discrete(name = "Behaviors", labels = c("Missing Value", "Behavior 2", "Behavior 1"))
+  return(graph)
+}
+
+g2 <- distribution_of_behavior(data_list)
+g2
+```
+
+
+This graph shows us the distribution of the mean value of calcium transition in cells of each mouse. As we can see, most cells have an average value between 0 to 2. Moreover, most of them are t distributed except for the mice Z_416 and Z_251, the two mice that have fewer data (25 cells and 34 cells, respectively).
+
+```{r}
+# the input of this function should be a data_frame of a mouse
+distribution_of_mean <- function(dl){
+  result <- data.frame()
+  for (i in 1:length(dl)){
+    df <- dl[[i]]
+    mean <- rep(0, ncol(df))
+    for (j in 1:ncol(df)) {
+      mean[j] <- mean(df[,j], na.rm = T)
+    }
+    mean <- round(mean, 1)
+    this_mouse <- data.frame(value = mean, class = str_c("mouse", name[i], sep = " "))
+    result <- bind_rows(result, this_mouse)
+  }
+
+  graph <- ggplot(data = result) + geom_bar(aes(x = value), fill = "blue") +
+    facet_wrap(~class, nrow = 3) +
+    labs(y = "count", x = "the mean value",
+                                        title = "the distributions of mean value of calcium in cells of each mouse")
+  return(graph)
+}
+
+g1 <- distribution_of_mean(data_list)
+g1
+```
+
+In this heat map, we plot 13 mice. The heat map illustrates the correlations of cells of each mouse, as we can see that there exist some strong correlations between certain cells. Thus we need to check correlations in detail before constructing any models.
+
+```{r}
+# cao
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(nr = 3, nc = 5)))
+col_fun = colorRamp2(c(-1, 0, 1), c("blue", "white", "red"))
+
+for (i in 1:length(data_list)) {
+  pushViewport(viewport(layout.pos.row = ((i - 1) %/% 5) + 1, layout.pos.col = ((i - 1) %% 5) + 1))
+  df <- as.matrix(data_list[[i]])
+  draw(Heatmap(matrix = cor(df[,-c(1:2)]), show_heatmap_legend = FALSE, column_title = name[i], show_row_dend = F, show_column_dend = F, show_row_names = F, show_column_names = F, col = col_fun), newpage = FALSE)
+  upViewport()
+}
+
+pushViewport(viewport(layout.pos.row = 3, layout.pos.col = 5))
+lgd = Legend(at = c(-1, 0.5, 0, -0.5, 1), col_fun = col_fun, title = "correlation legend", title_position = "topleft")
+grid.draw(lgd)
+upViewport()
+```
+
+```{r}
+library(ROCR)
+
+rocplot <- function(pred, truth, title) {
+  pred.obj <- prediction(pred, truth)
+  perform <- performance(pred.obj, "tpr", "fpr")
+  plot(perform, main = title)
+}
+```
+
+## PCA
+
+According to the correlation map, we found there is a high correlation between variables, so we considered conducting PCA. 
+At first, we calculated VIF values. Large VIF suggests predictors almost completely explained by the other variables in the equation. The VIF values we calculate for Mouse 255 of the Zero Maze study are as follows:
+
+```{r message=FALSE}
+source('Data_Wrangling.R')
+```
+
+```{r}
+
+example<-mutate(Z_255,behavior=case_when(Z_255$Y1==0&Z_255$Y2==0~-1,Z_255$Y1==1&Z_255$Y2==0~0,Z_255$Y1==0&Z_255$Y2==1~1))
+example<-example[example$behavior!=-1,]
+#plot(c(1:4238),example$behavior,type = 'l')
+
+m2<-glm(behavior~.,data = example[,-c(1,2)],family = 'binomial')
+head (car::vif(m2),20)
+
+```
+
+We find strong colinearity in our predictors, so we conduct PCA and then choose the first 20 PCs as new predictors.
+
+### Training model 
+
+The scree plot shows the tenth dimension only explained the 2.2% information of the data. 
+
+```{r}
+
+res.pca <- PCA(example[,c(3:112)],scale.unit = T, graph = FALSE,ncp=20)
+eig.val <- get_eigenvalue(res.pca)
+#fviz_pca_var(res.pca, col.var = "black")
+new_predictors<-res.pca$ind$coord
+new_predictors1<-new_predictors%>%as.data.frame()%>%mutate(behavior=example$behavior)
+```
+
+```{r}
+fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 100))
+```
+Then we Randomly half-by-half split the data into train set and test set and fit logistic regression again using the 20 principle components. Then we calculate the VIF values again, and we found there is no strong colinearity.
+
+```{r}
+train<-sample(c(1:4238),2119)
+m1<-glm(behavior~.,data = new_predictors1[train,],family = 'binomial')
+car::vif(m1)
+```
+
+Then we did the prediction on the test set using the threshold of 0.5 and got a result of about 0.83 accuracies (0.81, 0.85), 0.8 recall, and 0.9 specificities. The ROC plot also shows that the best threshold may be around 0.3, where we can have both high recall and specificity.
+
+```{r}
+library(broom)
+prediction<-predict(m1,new_predictors1[-train,])%>%unname()
+p<-case_when(prediction>0.5~1,prediction<0.5~0)
+
+table(new_predictors1[-train,ncol(new_predictors1)],p)%>%confusionMatrix()
+
+```
+The QQ plot shows that the residual follows a normal distribution.
+
+```{r}
+plot(m1, which = 2, id.n = 3)
+```
+
+### Model for the whole dataset
+
+Finally, based on the model building in the training set and test by test set, we fit the model again in the whole dataset. 
+
+```{r}
+m1<-glm(behavior~.,data = new_predictors1,family = 'binomial')
+prediction<-predict(m1,new_predictors1)%>%unname()
+p<-case_when(prediction>0.5~1,prediction<0.5~0)
+
+```
+
+```{r}
+summary(m1)
+```
+
+The confusion matrix shows the accuracy of the model for the whole dataset is 0.85 (0.8376, 0.8594) and with a Sensitivity of 0.74 and Specificity of 0.88. 
+
+```{r}
+table(new_predictors1[new_predictors1$behavior!=-1,ncol(new_predictors1)],p)%>%confusionMatrix()
+
+roc.plot(new_predictors1[,ncol(new_predictors1)],prediction)
+```
+We also check the normality of the residual, and the residual follows a normal distribution.
+
+```{r}
+plot(m1, which = 2, id.n = 3)
+```
+
+Then we plot the residual and we found that the model has better performance of detecting B1 than B0.
+
+```{r}
+model.data <- augment(m1) %>% 
+  mutate(index = 1:n()) 
+ggplot(model.data, aes(index, .std.resid)) + 
+  geom_jitter(aes(color = factor(behavior)), alpha = .5) +
+  theme_bw()
+
+```
+
+Influential values which are extreme individual data points that can alter the quality of the logistic regression model.The most extreme values in the data can be examined by visualizing the Cook’s distance values. Here we label the top 3 largest values.
+
+```{r}
+plot(m1, which = 4, id.n = 3)
+```
+## Tree-Based Method
+
+We extract 20 PC to fit the logistic regression, while the price for that is that we lose some useful signal information and noise since the top 20 PC only explained an accumulative 61% of the data, and we only get the 83% accuracy. 
+Considering this data includes many cells, we do not need to make dimensionality reduction before the random forest—the tree-based method without distribution restrictions.
+
+### Binary Decision tree
+
+Therefore, we use a classification tree to improve our accuracy of prediction. We put all variables in the training set and fit a binary decision tree.
+
+```{r}
+library(tree)
+library(randomForest)
+library(gbm)
+rf<-example[,-c(1,2)]
+rf$behavior<-as.factor(rf$behavior)
+```
+
+
+```{r}
+train<-sample(1:4238,2119)
+tree.carseats <- tree(behavior~. , rf[train,])
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats , pretty = 0)
+```
+
+The predicted result shown by the confusion matrix, the accuracy is 0.89(0.88, 0.90). And the  Sensitivity is 0.840, and the Specificity is 0.9164.
+
+```{r}
+p<-predict(tree.carseats,rf[-train,-125],type = "class")
+confusionMatrix(table(p,rf[-train,]$behavior))
+```
+
+### Random Forest
+A random forest is the average of many different single trees that only contain different subsets of original predictors. So a random forest will typically be helpful when we have many correlated predictors. We use a random forest model, which can be a universal method for all 13 zero maze data sets. We choose predictor subset size for each data set according to the number of cells. Then we build a reproducible function ‘rf’ and apply it to all 13 data sets.
+
+```{r}
+train<-sample(1:4238,2119)
+tree.carseats <- tree(behavior~. , rf[train,])
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats , pretty = 0)
+```
+```{r}
+p<-predict(tree.carseats,rf[-train,-125],type = "class")
+confusionMatrix(table(p,rf[-train,]$behavior))
+```
+
+```{r}
+rforest<- randomForest(behavior ~., data = rf ,
+subset = train , mtry =11, importance = TRUE)
+yhat.rf <- predict(rforest, newdata = rf[-train , ])
+
+```
+
+This is the confusion matrix for Mouse 255, this is one result of our function.
+
+```{r}
+confusionMatrix(table(yhat.rf,rf[-train,]$behavior))
+```
+
+Result for 13 mice in random forest function:
+
+```{r}
+accuracy <- c(.963, .982, .978, .982, .986, .971, .982, .966, .980, .932, .963, .977, .979)
+lower_bound <- c(.954, .976, .971, .975, .980, .962, .975, .957, .975, .923, .956, .971, .973)
+upper_bound <- c(.971, .987, .984, .987, .990, .978, .987, .972, .985, .941, .970, .982, .984 )
+record <- c(.954, .991, .942, .996, .998, .993, .993, .996, .999, .976, .990, .995, .998)
+specificity <- c(.970, .969, .994, .935, .914, .937, .956, .874, .901, .863, .904, .902, .896)
+F1 <- c(.956, .986, .963, .988, .992, .976, .987, .976, .988, .946, .974, .986, .987)
+
+rf_result <- data.frame("mouse" = c("Z_409", "Z_412", "Z_414", "Z_416", "Z_417", "Z_418", "Z_251", "Z_254",
+"Z_255", "Z_256", "Z_257", "Z_258", "Z_274"),accuracy, lower_bound, upper_bound, record, specificity, F1)
+flextable(rf_result)
+```
+
+The average accuracy of random forest for 13 mice is 97.23%. 
+
+```{r}
+summary(rf_result)
+```
+
+We plot the accuracy with a 95% confidence interval. The dot in the figure is the accuracy for each mouse, and the red line corresponds 95% confidence interval. The blue dashed line is baseline at 0.95, while the purple dashed line is 0.9. We can see almost mice got an accuracy of more than 95%, and all mice had more than 90% accuracy.
+
+```{r}
+ggplot(rf_result, aes(x=mouse, y=accuracy)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymax=upper_bound, ymin=lower_bound), colour="#AA0000")+ ylim(0.9,1) + 
+  geom_hline(yintercept = c(0.95, 0.9), colour=c('blue', "purple"), linetype="dashed", size = 1)
+```
+
+Then we plot the recall, specificity, and F1 of random forest for 13 mice, respectively. These values are generally close to 1, which means our model has excellent performance.
+
+```{r}
+rf_result_2 <- melt(rf_result[,c(-2,-3,-4)], id = "mouse")
+ggplot(data=rf_result_2, map=aes(x = mouse, y = value, width=0.85,fill=factor(variable)))+
+  geom_bar(stat="identity", position = "dodge", alpha = 0.8)
+```
+
+
+## Multilayer Neural Network
+
+We also have built a simple neural network model to predict the mice's behaviors. In the model, we construct two hidden layers, which contain 100 units and 50 units respectively, and both with ReLu activation function. In the output layer, we use the Sigmoid activation function to show the probability of whether the mouse is conducting behavior 1. The following graph shows the model structure of mouse Z409 as an example.
+
+```{r}
+load.image("2.png")
+```
+
+```{r}
+load.image("3.png")
+```
+The accuracies of our Neural Network models are very high; most of them are around 97%. We set the epochs to be 50, batch size to be 32, and validation set to be random 20% of the data, and we plot the model accuracy of mouse Z409 as an example below.
+
+
+```{r eval=FALSE}
+data <- data_list2[[1]] %>% mutate(B1 = as.numeric(B1))
+
+x <- model.matrix(B1 ~. -1, data = data)
+y <- data$B1 
+train <- sample(1:nrow(data), nrow(data) * 0.75)
+test <- -train
+
+
+modelnn <- keras_model_sequential()
+modelnn %>%
+  layer_dense(units = 100, activation = "relu",
+                 input_shape = ncol(x)) %>%
+  layer_dropout(rate = 0.1) %>%
+  layer_dense(units = 50, activation = "relu") %>%
+  layer_dropout(rate = 0.1) %>% 
+  layer_dense(units = 1, activation = "sigmoid")
+
+modelnn %>% compile(loss = "binary_crossentropy",
+optimizer = optimizer_rmsprop(), metrics = c("accuracy")
+)
+y <- as.matrix(y)
+history <- modelnn %>% fit(x[train,], y[train], epochs = 50, 
+                           batch_size = 32,
+                           validation_split = 0.2)
+
+plot(history)
+summary(history)
+
+```
+
+# Conclusion
+
+There exist correlations between many cells of each mouse, including all the cells as predictors in a model is not wise, dimension reduction is necessary.
+
+Compared with the logistic_PCA model,  the random forest classification model not only is easier to visualize and interpret, but also provides a higher prediction accuracy that can even compete with the Neural Network model.
+
+# Discussion
+
+For our logistic-PCA model, we select the first 20 principal components as predictors. The choice of this number is not rigorously verified, so 20 may not be the optimal choice. And in the random forest, we pick the predictor subset size to be the square root of the number of all predictors, this is a common convention, and it is not guaranteed to be the optimal choice. In the neural network model, the number of hidden layers and units in each layer are also not verified to be the optimal choice. In the validation process, since there are spatial and time relationships between each row of the data, randomly selecting observations to form the validation set may not be the best choice.
+
