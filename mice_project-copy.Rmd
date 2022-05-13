@@ -1,6 +1,6 @@
 ---
 title: "Mouse_EDA"
-author: "XihaoCao"
+author: "Group 9"
 date: "2022/4/6"
 output: pdf_document
 ---
@@ -311,17 +311,6 @@ confusionMatrix(table(p,rf[-train,]$behavior))
 ### Random Forest
 A random forest is the average of many different single trees that only contain different subsets of original predictors. So a random forest will typically be helpful when we have many correlated predictors. We use a random forest model, which can be a universal method for all 13 zero maze data sets. We choose predictor subset size for each data set according to the number of cells. Then we build a reproducible function ‘rf’ and apply it to all 13 data sets.
 
-```{r}
-train<-sample(1:4238,2119)
-tree.carseats <- tree(behavior~. , rf[train,])
-summary(tree.carseats)
-plot(tree.carseats)
-text(tree.carseats , pretty = 0)
-```
-```{r}
-p<-predict(tree.carseats,rf[-train,-125],type = "class")
-confusionMatrix(table(p,rf[-train,]$behavior))
-```
 
 ```{r}
 rforest<- randomForest(behavior ~., data = rf ,
