@@ -1,8 +1,4 @@
-# Xihao Cao
-# Group 9
-# 2022/04/07
 # This file reads the mouse data into data_frame for the later use.
-
 
 
 # import
