@@ -73,7 +73,7 @@ Armed with this data, we aim to establish a clear link between cell activation a
 ```{r}
 # data_list is is the raw data without combining the two behaviors
 # data_list2 combines the two behaviors and delete missing values
-source("Data_Wrangling_2.R")
+source("Data_Loading.R")
 
 # combine behavior two columns to one with binary value 0 or 1, where 1 represent behavior 1 and 0 behavior 2 and ehavior (0, 0) is considered missing value, thus deleted
 data_list2 <- list()
