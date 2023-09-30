@@ -57,7 +57,6 @@ Our primary objective is to analyze the data from the Zero Maze experiment and p
 ## Dataset Structure
 Alberto's team tested 13 mice in the Zero Maze experiment. Data for each mouse is stored in distinct datasets. For every 10 HZ interval during the 10-minute experiment, data points are recorded, detailing the behavior of the mouse and the pertinent cell information.
 
-# import the data structure graph
 ```{r echo=FALSE, out.width = '90%'}
 knitr::include_graphics("2.png")
 ```
@@ -65,7 +64,7 @@ knitr::include_graphics("2.png")
 ## Data Features
 Location of Mice: The dataset identifies the mouse's location with two distinct columns. A '1' in a column indicates the mouse's presence in the respective arm, while a '0' denotes its absence. Notably, during times when a mouse is transitioning between arms, both columns reflect a '0'. After a comprehensive discussion with Alberto, we've decided to treat these instances as edge cases, excluding them from our analysis. This simplifies our interpretation, allowing us to view the mice behaviors as binary.
 
-## Cell Activation : The dataset records the calcium flow amount for each mouse cell as a measure of its activation, with all values being positive. It's crucial to note that the specific cells recorded vary for each mouse. For instance, the data documents 112 cells for mouse Z409, whereas only 28 cells are recorded for mouse Z416.
+Cell Activation : The dataset records the calcium flow amount for each mouse cell as a measure of its activation, with all values being positive. It's crucial to note that the specific cells recorded vary for each mouse. For instance, the data documents 112 cells for mouse Z409, whereas only 28 cells are recorded for mouse Z416.
 Armed with this data, we aim to establish a clear link between cell activation and mice behavior, delving deep into the intricacies of neuroscience.
  
 
