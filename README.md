@@ -1,7 +1,12 @@
 # Predictive Modeling of Mice Behavior through Neural Activity: Integrating PCA, Random Forest, and Multi-layer Perceptron Approaches
 
 ## Summary
-In this project, I began by generating synthetic data that follows a multimodal Gaussian distribution with specified parameters. I then constructed various machine learning models to approximate this multimodal Gaussian distribution, subsequently comparing their accuracies and execution times.
+In partnership with Cruz-Martin from the Center for Systems Neuroscience at Boston University, this project focuses on 
+predicting mice behaviors based on their neural data. Specifically, using datasets from 13 mice, our analysis connects
+variations in neural cell calcium flow to the behaviors observed in mice during the experiments designed by our client.
+To achieve a more accurate prediction of mouse behaviors based solely on their neural data, we employed machine learning
+models such as PCA integrated with logistic regression and random forests. Notably, our multi-layer perceptron model stood
+out, achieving an impressive accuracy of 97%.
 
 
 ## Setup
@@ -14,16 +19,5 @@ This project is developed using R and R Studio. Refer to `mice_project-report.RM
 - mice_project-report.RMD: An RMD file that produces the detailed analysis report for the project.
 - mice_project-report.pdf: A PDF version of the project report, derived from the aforementioned RMD file.
 
-
-
-## Content
-This project includes 7 parts in total, specifically: 
-1. Synthesize a multimodal Gaussian distribution
-2. Fit a piecewise linear regression model
-3. Fit three spline models with 2, 3, and 4 knots respectively
-4. Compare the R-squared values and root mean square deviations (RMSD) of the models from the previous sections
-5. Fit four polynomial models with degree 2,3,4,5 respectively
-6. Compare the fitting times of the constructed models
-7. Construct two polynomial models of degree 5 using Lasso and Ridge regularization techniques
 
 ### For inquiries or further discussion, please reach out to me at [xihaocao@163.com](mailto:xihaocao@163.com). Thank you!
