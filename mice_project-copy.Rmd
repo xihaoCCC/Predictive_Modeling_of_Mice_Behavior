@@ -1,6 +1,5 @@
 ---
-title: "Final Report"
-author: "Group 9"
+title: "Predictive Modeling of Mice Behavior through Neural Activity"
 date: "2022/4/6"
 output: pdf_document
 ---
@@ -10,7 +9,6 @@ knitr::opts_chunk$set(cache = T)
 knitr::opts_chunk$set(echo = F)
 knitr::opts_chunk$set(warning = F, message = F)
 ```
-
 
 
 ```{r}
@@ -50,23 +48,26 @@ library(imager)
 
 # Introduction
 
-Our client is Cruz-Martin, Alberto from the Center for Systems Neuroscience at Boston University. Our client is mainly interested in decoding how mice's brain circuits control their behaviors, and he wants to understand the contribution of specific cell types and their connections to the visual processing and perception of a mouse. Our client wants us to help him predict the mice's behaviors by their cell activation status in this project. 
+Cruz -Martin , Alberto from the Center for Systems Neuroscience at Boston University is dedicated to unraveling the mysteries of how mice's brain circuits control their behaviors. The central puzzle revolves around understanding the roles of specific cell types and their contributions to the visual processing and perception in mice . Recognizing the complexity of this endeavor , Alberto sought our expertise in data analysis and prediction.
 
-Our client has conducted three types of experiments: Zero Maze, Opposite Sex, and Direct Interaction on multiple mice. In the Zero Maze experiment, mice are placed in an elevated zero maze to explore for 10 minutes, they can either be in the closed arm (anxiolytic) or the open arm (anxiogenic), and the location of the mice is recorded. In the Opposite Sex experiment, mice were placed in a social chamber for 10 minutes and allowed the mice to explore two cups containing a male and female of the same strain. Which cup the experiment mouse interacts with is recorded. In the Direct Interaction experiment, each mouse is placed in a social chamber for 5 minutes and is allowed to interact with a novel mouse of the same strain freely. Then whether the experiment mouse is performing a social behavior is recorded. In all three experiments, the behaviors of mice are considered binary.
+# Objective
+Our primary objective is to analyze the data from the Zero Maze experiment and predict the behaviors of mice based on their cell activation status.
 
-Our group focuses on the Zero Maze experiment and conducts the following analysis.
+# Data Collection and Methodology
+## Dataset Structure
+Alberto's team tested 13 mice in the Zero Maze experiment. Data for each mouse is stored in distinct datasets. For every 10 HZ interval during the 10-minute experiment, data points are recorded, detailing the behavior of the mouse and the pertinent cell information.
 
-# Data and Methods
-
-Our client carried out the Zero Maze experiment on 13 mice; the data of each mouse are stored in separate data sets. Each experiment’s time length is 10 minutes, and the behaviors of the mouse and information of each cell are recorded every 10 HZ and stored as a row. The following graph shows the basic structure of the data sets.
-
+# import the data structure graph
 ```{r echo=FALSE, out.width = '90%'}
 knitr::include_graphics("2.png")
 ```
 
-Our client records whether the mouse is in the open armor in the close arm separately using two columns, a value of 1 in a column representing the mouse is in the corresponding arm, 0 representing not. When the mouse transits from one arm to the other and its body is in the middle of the two arms, the values of the two columns are both recorded as 0. However, after discussing with our client, we consider the transition situation the edge case and no longer include them in the analysis. Thus the behaviors of mice in this experiment are assumed binary; they either stay in the open arm or the closed arm.
+## Data Features
+Location of Mice: The dataset identifies the mouse's location with two distinct columns. A '1' in a column indicates the mouse's presence in the respective arm, while a '0' denotes its absence. Notably, during times when a mouse is transitioning between arms, both columns reflect a '0'. After a comprehensive discussion with Alberto, we've decided to treat these instances as edge cases, excluding them from our analysis. This simplifies our interpretation, allowing us to view the mice behaviors as binary.
 
-Each mouse cell's calcium flow amount is recorded to quantify whether the cell is on fire; the values are all positive. Meanwhile, the collection of cells recorded for each mouse is different; for example, 112 cells of mouse Z409 are recorded, and only 28 cells of mouse Z416 are recorded. 
+## Cell Activation : The dataset records the calcium flow amount for each mouse cell as a measure of its activation, with all values being positive. It's crucial to note that the specific cells recorded vary for each mouse. For instance, the data documents 112 cells for mouse Z409, whereas only 28 cells are recorded for mouse Z416.
+Armed with this data, we aim to establish a clear link between cell activation and mice behavior, delving deep into the intricacies of neuroscience.
+ 
 
 ## EDA
 
