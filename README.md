@@ -14,13 +14,13 @@ This project is developed using R and R Studio. Refer to `mice_project-report.RM
 
 
 ## File Descriptions
-- Data_Loading.R: An R script dedicated to importing and consolidating the neural data of mice into a singular container.
-- Data_Wrangling.R: An R script designed for cleaning and refining the mice neural data.
-- mice_project-report.RMD: An RMD file that produces the detailed analysis report for the project.
-- mice_project-report.pdf: A PDF version of the project report, derived from the aforementioned RMD file.
-- 1.png: MLP structure diagram
-- 2.png: data structure diagram
-- 3.png: MLP accuracy and performance
+- `Data_Loading.R`: An R script dedicated to importing and consolidating the neural data of mice into a singular container.
+- `Data_Wrangling.R`: An R script designed for cleaning and refining the mice neural data.
+- `mice_project-report.RMD`: An RMD file that produces the detailed analysis report for the project.
+- `mice_project-report.pdf`: A PDF version of the project report, derived from the aforementioned RMD file.
+- `1.png`: MLP structure diagram
+- `2.png`: data structure diagram
+- `3.png`: MLP accuracy and performance
 
 
 ### For inquiries or further discussion, please reach out to me at [xihaocao@163.com](mailto:xihaocao@163.com). Thank you!
